@@ -1,9 +1,18 @@
 const storageKey = 'gvbs-pages-chat-v1';
 const profileKey = 'gvbs-pages-profile';
 
+function loadJson(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 const state = {
-  profile: JSON.parse(localStorage.getItem(profileKey) || 'null'),
-  messages: JSON.parse(localStorage.getItem(storageKey) || 'null') || [
+  profile: loadJson(profileKey, null),
+  messages: loadJson(storageKey, null) || [
     {
       id: crypto.randomUUID(),
       authorId: 'system',
@@ -30,6 +39,11 @@ function saveMessages() {
 function saveProfile() {
   localStorage.setItem(profileKey, JSON.stringify(state.profile));
 }
+
+saveMessages();
+if (state.profile) saveProfile();
+window.addEventListener('beforeunload', saveMessages);
+window.addEventListener('pagehide', saveMessages);
 
 function formatTime(value) {
   return new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
