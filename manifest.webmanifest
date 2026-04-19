@@ -1,0 +1,9 @@
+{
+  "name": "GVBS Media Chat",
+  "short_name": "GVBS Chat",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0b1526",
+  "theme_color": "#0b1526",
+  "description": "Внутренний чат медиа-служения церкви"
+}
