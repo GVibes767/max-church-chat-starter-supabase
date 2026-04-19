@@ -44,11 +44,17 @@ function saveJson(key, value) { localStorage.setItem(key, JSON.stringify(value))
 function esc(t) { const d = document.createElement('div'); d.textContent = t ?? ''; return d.innerHTML; }
 function tm(v) { return new Date(v).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
 function vib(ms = 16) { try { navigator.vibrate?.(ms); } catch {} }
-function avatar(name, url, cls='') { return url ? `<img class='avatar-img ${cls}' src='${url}' alt='avatar'>` : `<span class='avatar-fallback ${cls}'>${esc((name || 'U').slice(0,1).toUpperCase())}</span>`; }
+function avatar(name, url) { return url ? `<img class='avatar-img' src='${url}' alt='avatar'>` : `<span class='avatar-fallback'>${esc((name || 'U').slice(0,1).toUpperCase())}</span>`; }
 function saveProfile() { saveJson(PROFILE, state.profile); }
 function saveReg() { localStorage.setItem(REG_KEY, state.regulationUrl || ''); }
 function saveNotify() { localStorage.setItem(NOTIFY, state.notificationsEnabled ? '1' : '0'); }
 function updateLastSeen() { saveJson(LAST_SEEN, [...state.lastSeenIds]); }
+function notificationStateText() {
+  if (!('Notification' in window)) return 'Браузер не поддерживает уведомления';
+  if (Notification.permission === 'granted' && state.notificationsEnabled) return 'Уведомления включены';
+  if (Notification.permission === 'denied') return 'Разрешение на уведомления запрещено';
+  return 'Уведомления ещё не включены';
+}
 
 async function fileToDataUrl(file) {
   return await new Promise((resolve) => { const fr = new FileReader(); fr.onload = () => resolve(fr.result); fr.readAsDataURL(file); });
@@ -58,7 +64,19 @@ function notifyMessage(msg) {
   if (!state.notificationsEnabled || !('Notification' in window) || Notification.permission !== 'granted') return;
   if (msg.author_id === state.profile?.id) return;
   if (!document.hidden) return;
-  new Notification(`Новое сообщение: ${msg.author_name}`, { body: msg.text || 'Фото / голосовое сообщение', icon: state.profile?.avatar || undefined });
+  new Notification(`Новое сообщение: ${msg.author_name}`, { body: msg.text || 'Фото / голосовое сообщение' });
+}
+
+function sendTestNotification() {
+  if (!('Notification' in window)) {
+    alert('На этом устройстве уведомления не поддерживаются браузером.');
+    return;
+  }
+  if (Notification.permission !== 'granted') {
+    alert('Сначала включи уведомления.');
+    return;
+  }
+  new Notification('Тестовое уведомление', { body: 'Проверка уведомлений чата прошла.' });
 }
 
 async function enableNotifications() {
@@ -72,6 +90,7 @@ async function enableNotifications() {
   renderShell();
   sub();
   load();
+  if (p === 'granted') sendTestNotification();
 }
 
 function updateActionMode() {
@@ -104,7 +123,7 @@ function renderLogin() {
 
 function renderShell() {
   const p = state.profile;
-  app.innerHTML = `<div class='shell'><div class='layout'><aside class='sidebar'><div class='pill'>MEDIA ROOM</div><h2>Медиа-служение</h2><p>Общая история на всех устройствах через Supabase.</p><div class='section'><div class='section-title'>Профиль</div><div class='profile-line'><div class='avatar'>${avatar(p.name, p.avatar)}</div><div><div class='name-strong'>${esc(p.name)}</div><div class='muted' id='st'>Подключение...</div></div></div></div><div class='section'><div class='section-title'>Навигация</div><button class='nav-btn ${state.tab==='chat'?'active':''}' id='tabChat'>Чат</button><button class='nav-btn ${state.tab==='rules'?'active':''}' id='tabRules'>Регламент</button></div><div class='section'><div class='section-title'>Уведомления</div><button class='nav-btn ${state.notificationsEnabled?'active':''}' id='notifyBtn'>${state.notificationsEnabled?'Уведомления включены':'Включить уведомления'}</button></div></aside><main class='chat'><header class='chat-head'><div><h1>${state.tab==='chat'?'Чат медиа-служения':'Регламент медиа-служения'}</h1><p>${state.tab==='chat'?'Сообщения, фото, эмодзи и голосовые':'Встроенный регламент команды'}</p></div><div class='head-actions'><button class='profile-chip' id='rename'><div class='avatar small'>${avatar(p.name,p.avatar)}</div><span>${esc(p.name)}</span></button></div></header><section class='tab ${state.tab==='chat'?'':'hidden'}' id='chatTab'><div class='messages' id='m'></div><button class='jump hidden' id='down' aria-label='Вниз'>↓</button><div class='composer'><div class='emoji-panel ${state.emojiOpen?'open':''}' id='emojiPanel'>${EMOJIS.map(e=>`<button class='emoji-btn' data-emoji='${e}'>${e}</button>`).join('')}</div><div class='previews' id='p'></div><div class='composer-row'><button class='icon-btn' id='emojiToggle' title='Эмодзи'>😊</button><textarea id='t' placeholder='Сообщение' rows='1'></textarea><input id='f' type='file' accept='image/*' multiple class='hidden'><button class='icon-btn' id='pf' title='Фото'>📎</button><button class='action-btn' id='act' title='Действие'>🎤</button></div><div class='voice-row ${state.rec?'show':''}' id='voiceRow'><div class='voice-status'>Идёт запись…</div><button class='ghost lock ${state.rec?'':'hidden'}' id='lockVoice'>Закрепить</button></div></div></section><section class='tab ${state.tab==='rules'?'':'hidden'} regulation' id='rulesTab'><div class='rules-card'><div class='section-title'>Положение о медиаслужении</div><p class='muted'>Вкладка уже наполнена содержанием документа. Ниже можно при желании добавить публичную PDF-ссылку отдельно.</p><div class='rules-form'><input class='input' id='regUrl' placeholder='Публичная ссылка на PDF (необязательно)' value='${esc(state.regulationUrl)}'><button class='ghost' id='saveReg'>Сохранить ссылку</button></div>${state.regulationUrl?`<a class='ghost full' href='${state.regulationUrl}' target='_blank' rel='noopener noreferrer'>Открыть PDF в новой вкладке</a>`:''}<div class='embedded-rules'>${REGULATION_HTML}</div></div></section></main></div></div>`;
+  app.innerHTML = `<div class='shell'><div class='layout'><aside class='sidebar'><div class='pill'>MEDIA ROOM</div><h2>Медиа-служение</h2><p>Общая история на всех устройствах через Supabase.</p><div class='section'><div class='section-title'>Профиль</div><div class='profile-line'><div class='avatar'>${avatar(p.name, p.avatar)}</div><div><div class='name-strong'>${esc(p.name)}</div><div class='muted' id='st'>Подключение...</div></div></div></div></aside><main class='chat'><header class='chat-head'><div><h1>${state.tab==='chat'?'Чат медиа-служения':state.tab==='rules'?'Регламент медиа-служения':'Уведомления чата'}</h1><p>${state.tab==='chat'?'Сообщения, фото, эмодзи и голосовые':state.tab==='rules'?'Встроенный регламент команды':'Разрешения и тест уведомлений'}</p></div><div class='head-actions'><button class='profile-chip' id='rename'><div class='avatar small'>${avatar(p.name,p.avatar)}</div><span>${esc(p.name)}</span></button></div></header><div class='top-tabs'><button class='top-tab ${state.tab==='chat'?'active':''}' id='tabChat'>Чат</button><button class='top-tab ${state.tab==='rules'?'active':''}' id='tabRules'>Регламент</button><button class='top-tab ${state.tab==='notify'?'active':''}' id='tabNotify'>Уведомления</button></div><section class='tab ${state.tab==='chat'?'':'hidden'}' id='chatTab'><div class='messages' id='m'></div><button class='jump hidden' id='down' aria-label='Вниз'>↓</button><div class='composer'><div class='emoji-panel ${state.emojiOpen?'open':''}' id='emojiPanel'>${EMOJIS.map(e=>`<button class='emoji-btn' data-emoji='${e}'>${e}</button>`).join('')}</div><div class='previews' id='p'></div><div class='composer-row'><button class='icon-btn' id='emojiToggle' title='Эмодзи'>😊</button><textarea id='t' placeholder='Сообщение' rows='1'></textarea><input id='f' type='file' accept='image/*' multiple class='hidden'><button class='icon-btn' id='pf' title='Фото'>📎</button><button class='action-btn' id='act' title='Действие'>🎤</button></div><div class='voice-row ${state.rec?'show':''}' id='voiceRow'><div class='voice-status'>Идёт запись…</div><button class='ghost lock ${state.rec?'':'hidden'}' id='lockVoice'>Закрепить</button></div></div></section><section class='tab ${state.tab==='rules'?'':'hidden'} regulation' id='rulesTab'><div class='rules-card'><div class='section-title'>Положение о медиаслужении</div><p class='muted'>Вкладка уже наполнена содержанием документа. Ниже можно при желании добавить публичную PDF-ссылку отдельно.</p><div class='rules-form'><input class='input' id='regUrl' placeholder='Публичная ссылка на PDF (необязательно)' value='${esc(state.regulationUrl)}'><button class='ghost' id='saveReg'>Сохранить ссылку</button></div>${state.regulationUrl?`<a class='ghost full' href='${state.regulationUrl}' target='_blank' rel='noopener noreferrer'>Открыть PDF в новой вкладке</a>`:''}<div class='embedded-rules'>${REGULATION_HTML}</div></div></section><section class='tab ${state.tab==='notify'?'':'hidden'} notify-tab' id='notifyTab'><div class='notify-card'><div class='section-title'>Статус</div><div class='notify-status'>${esc(notificationStateText())}</div><p class='muted'>Открой эту вкладку и нажми кнопку включения. После разрешения браузер покажет тестовое уведомление.</p><div class='notify-actions'><button class='primary notify-main' id='enableNotifyBtn'>Включить уведомления</button><button class='ghost notify-test' id='testNotifyBtn'>Тест уведомления</button></div><div class='notify-note'>Если браузер уже запретил уведомления, открой настройки сайта и разреши их вручную.</div></div></section></main></div></div>`;
   bind();
   draw();
   updateActionMode();
@@ -246,7 +265,9 @@ function insertEmoji(emoji) {
 function bind() {
   $('#tabChat').onclick = () => { vib(); state.tab = 'chat'; renderShell(); sub(); load(); };
   $('#tabRules').onclick = () => { vib(); state.tab = 'rules'; renderShell(); sub(); };
-  $('#notifyBtn').onclick = () => { vib(); enableNotifications(); };
+  $('#tabNotify').onclick = () => { vib(); state.tab = 'notify'; renderShell(); sub(); };
+  $('#enableNotifyBtn')?.addEventListener('click', () => { vib(); enableNotifications(); });
+  $('#testNotifyBtn')?.addEventListener('click', () => { vib(); sendTestNotification(); });
   $('#rename').onclick = async () => {
     vib();
     const n = prompt('Новое имя участника', state.profile.name || '');
