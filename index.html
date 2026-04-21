@@ -5,19 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0b1526" />
     <title>GVBS Media Chat</title>
-    <link rel="manifest" href="./manifest.webmanifest?v=9" />
-    <link rel="stylesheet" href="./styles.css?v=9" />
-    <link rel="stylesheet" href="./mobile-chat-fixes.css?v=9" />
+    <link rel="manifest" href="./manifest.webmanifest?v=10" />
+    <link rel="stylesheet" href="./final-styles.css?v=10" />
   </head>
   <body>
     <div id="app"></div>
-    <script type="module" src="./shared-app.js?v=9"></script>
-    <script type="module" src="./push-client.js?v=9"></script>
-    <script type="module" src="./app-autoconfig.js?v=9"></script>
+    <script type="module" src="./final-app.js?v=10"></script>
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function () {
-          navigator.serviceWorker.register('./sw.js?v=9').catch(function (err) {
+          navigator.serviceWorker.register('./sw.js?v=10').catch(function (err) {
             console.error('SW register failed', err);
           });
         });
