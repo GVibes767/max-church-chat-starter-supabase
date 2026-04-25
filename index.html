@@ -5,19 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#eef4ff" />
     <title>GVBS Media Hub</title>
-    <link rel="manifest" href="./manifest.webmanifest?v=30" />
-    <link rel="stylesheet" href="./v2.css?v=30" />
+    <link rel="manifest" href="./manifest.webmanifest?v=31" />
+    <link rel="stylesheet" href="./v2.css?v=31" />
   </head>
   <body>
     <div id="app"></div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
-    <script src="./hardening.js?v=30"></script>
-    <script type="module" src="./v2-app.js?v=30"></script>
+    <script src="./hardening.js?v=31"></script>
+    <script src="./v2-app.js?v=31"></script>
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function () {
-          navigator.serviceWorker.register('./sw.js?v=30').catch(function (err) {
+          navigator.serviceWorker.register('./sw.js?v=31').catch(function (err) {
             console.error('SW register failed', err);
           });
         });
