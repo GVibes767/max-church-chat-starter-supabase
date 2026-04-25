@@ -5,19 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0b1526" />
     <title>GVBS Media Chat</title>
-    <link rel="manifest" href="./manifest.webmanifest?v=20" />
-    <link rel="stylesheet" href="./final-styles.css?v=20" />
+    <link rel="manifest" href="./manifest.webmanifest?v=21" />
+    <link rel="stylesheet" href="./final-styles.css?v=21" />
   </head>
   <body>
     <div id="app"></div>
-    <script src="./site-config.js?v=20"></script>
+    <script src="./site-config.js?v=21"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
-    <script type="module" src="./final-app.js?v=20"></script>
+    <script type="module" src="./final-app.js?v=21"></script>
+    <script type="module" src="./notify-bridge.js?v=21"></script>
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function () {
-          navigator.serviceWorker.register('./sw.js?v=20').catch(function (err) {
+          navigator.serviceWorker.register('./sw.js?v=21').catch(function (err) {
             console.error('SW register failed', err);
           });
         });
